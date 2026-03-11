@@ -59,8 +59,8 @@ def get_s3_client():
             aws_secret_access_key=S3_SECRET_KEY,
             region_name=S3_REGION
         )
-        # A quick check to see if credentials are valid
-        s3_client.list_buckets()
+        # Check if we can access the specific bucket
+        s3_client.head_bucket(Bucket=S3_BUCKET_NAME)
         print("S3 connection successful!")
         return s3_client
     except NoCredentialsError:
