@@ -21,25 +21,37 @@ S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
 S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
 S3_REGION = os.getenv("S3_REGION")
 
-TABLES_TO_EXPORT = ["table1", "table2", "table3"] # Replace with your table names
+TABLES_TO_EXPORT = [""] # Replace with your table names
 
 CHUNK_SIZE = 1000000  # One million records per CSV
 
 # --- Database Connection ---
 def get_db_connection():
     """Establishes a connection to the SQL Server database."""
+    print("--- Attempting to connect to the database with the following parameters: ---")
+    print(f"Server: {DB_SERVER}")
+    print(f"Database: {DB_DATABASE}")
+    print(f"Username: {DB_USERNAME}")
+    print(f"Driver: {DB_DRIVER}")
+    print("-----------------------------------------------------------------------")
     conn_str = f"DRIVER={DB_DRIVER};SERVER={DB_SERVER};DATABASE={DB_DATABASE};UID={DB_USERNAME};PWD={DB_PASSWORD}"
     try:
         conn = pyodbc.connect(conn_str)
+        print("Database connection successful!")
         return conn
     except pyodbc.Error as ex:
         sqlstate = ex.args[0]
         print(f"Database connection error: {sqlstate}")
+        print(f"Full error: {ex}")
         return None
 
 # --- S3 Connection ---
 def get_s3_client():
     """Establishes a connection to the S3 bucket."""
+    print("--- Attempting to connect to S3 with the following parameters: ---")
+    print(f"Bucket Name: {S3_BUCKET_NAME}")
+    print(f"Region: {S3_REGION}")
+    print("-------------------------------------------------------------")
     try:
         s3_client = boto3.client(
             "s3",
@@ -47,9 +59,15 @@ def get_s3_client():
             aws_secret_access_key=S3_SECRET_KEY,
             region_name=S3_REGION
         )
+        # A quick check to see if credentials are valid
+        s3_client.list_buckets()
+        print("S3 connection successful!")
         return s3_client
     except NoCredentialsError:
         print("S3 credentials not found.")
+        return None
+    except Exception as e:
+        print(f"S3 connection error: {e}")
         return None
 
 # --- Main Export Logic ---
@@ -90,6 +108,10 @@ def main():
 
     if not db_conn or not s3_client:
         print("Could not establish connections. Exiting.")
+        return
+
+    if not TABLES_TO_EXPORT or TABLES_TO_EXPORT == [""]:
+        print("No tables to export. Please update the TABLES_TO_EXPORT list in main.py")
         return
 
     for table in TABLES_TO_EXPORT:
