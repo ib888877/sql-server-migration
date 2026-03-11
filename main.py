@@ -43,8 +43,8 @@ def get_db_connection():
         print(f"Username: {DB_USERNAME}")
         conn_str += f"UID={DB_USERNAME};PWD={DB_PASSWORD};"
 
-    # Adding parameters to handle potential encryption/certificate issues
-    conn_str += "Encrypt=False;TrustServerCertificate=True;"
+    # Using 'yes'/'no' for ODBC boolean parameters
+    conn_str += "Encrypt=no;TrustServerCertificate=yes;"
 
     print("-----------------------------------------------------------------------")
 
