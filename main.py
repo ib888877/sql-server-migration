@@ -46,6 +46,10 @@ def get_db_connection():
     # Using 'yes'/'no' for ODBC boolean parameters
     conn_str += "Encrypt=no;TrustServerCertificate=yes;"
 
+    print("--- Using the following connection string (password hidden): ---")
+    # Create a temporary string for printing that censors the password
+    safe_conn_str = conn_str.replace(f"PWD={DB_PASSWORD}", "PWD=********")
+    print(safe_conn_str)
     print("-----------------------------------------------------------------------")
 
     try:
