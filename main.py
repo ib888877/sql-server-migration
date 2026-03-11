@@ -20,7 +20,7 @@ S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
 S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
 S3_REGION = os.getenv("S3_REGION")
 
-TABLES_TO_EXPORT = [""] # Replace with your table names
+TABLES_TO_EXPORT = ["bkup_raw_transactions_20230331"] # Replace with your table names
 
 CHUNK_SIZE = 1000000  # One million records per CSV
 
@@ -88,7 +88,7 @@ def export_table_to_csv(table_name, conn, s3_client):
             csv_buffer = df.to_csv(index=False)
 
             try:
-                s3_client.put_object(Bucket=S3_BUCKET_NAME, Key=f"{table_name}/{file_name}", Body=csv_buffer)
+                s3_client.put_object(Bucket=S3_BUCKET_NAME, Key=f"DB_Export/{table_name}/{file_name}", Body=csv_buffer)
                 print(f"Uploaded {file_name} to S3 bucket {S3_BUCKET_NAME}")
             except Exception as e:
                 print(f"Error uploading to S3: {e}")
