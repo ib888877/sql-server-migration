@@ -1,7 +1,7 @@
 
 import os
 import pandas as pd
-import pyodbc
+import pymssql # Changed from pyodbc
 import boto3
 from botocore.exceptions import NoCredentialsError
 from dotenv import load_dotenv
@@ -14,8 +14,6 @@ DB_SERVER = os.getenv("DB_SERVER")
 DB_DATABASE = os.getenv("DB_DATABASE")
 DB_USERNAME = os.getenv("DB_USERNAME")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_DRIVER = os.getenv("DB_DRIVER")
-DB_AUTH_METHOD = os.getenv("DB_AUTH_METHOD", "SQL") # "SQL" or "Windows"
 
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
@@ -26,40 +24,25 @@ TABLES_TO_EXPORT = [""] # Replace with your table names
 
 CHUNK_SIZE = 1000000  # One million records per CSV
 
-# --- Database Connection ---
+# --- Database Connection (Now using pymssql) ---
 def get_db_connection():
-    """Establishes a connection to the SQL Server database."""
-    print("--- Attempting to connect to the database with the following parameters: ---")
+    """Establishes a connection to the SQL Server database using pymssql."""
+    print("--- Attempting to connect to the database with pymssql: ---")
     print(f"Server: {DB_SERVER}")
     print(f"Database: {DB_DATABASE}")
-    print(f"Driver: {DB_DRIVER}")
-    print(f"Authentication Method: {DB_AUTH_METHOD}")
-
-    conn_str = f"DRIVER={DB_DRIVER};SERVER={DB_SERVER};DATABASE={DB_DATABASE};"
-
-    if DB_AUTH_METHOD.lower() == "windows":
-        conn_str += "Trusted_Connection=yes;"
-    else: # SQL Server Authentication
-        print(f"Username: {DB_USERNAME}")
-        conn_str += f"UID={DB_USERNAME};PWD={DB_PASSWORD};"
-
-    # Using 'yes'/'no' for ODBC boolean parameters
-    conn_str += "Encrypt=no;TrustServerCertificate=yes;"
-
-    print("--- Using the following connection string (password hidden): ---")
-    # Create a temporary string for printing that censors the password
-    safe_conn_str = conn_str.replace(f"PWD={DB_PASSWORD}", "PWD=********")
-    print(safe_conn_str)
-    print("-----------------------------------------------------------------------")
-
+    print(f"Username: {DB_USERNAME}")
+    print("-----------------------------------------------------------")
     try:
-        conn = pyodbc.connect(conn_str)
+        conn = pymssql.connect(
+            server=DB_SERVER,
+            user=DB_USERNAME,
+            password=DB_PASSWORD,
+            database=DB_DATABASE
+        )
         print("Database connection successful!")
         return conn
-    except pyodbc.Error as ex:
-        sqlstate = ex.args[0]
-        print(f"Database connection error: {sqlstate}")
-        print(f"Full error: {ex}")
+    except pymssql.Error as ex:
+        print(f"Database connection error: {ex}")
         return None
 
 # --- S3 Connection ---

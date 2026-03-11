@@ -1,4 +1,4 @@
 pandas
-pyodbc
 boto3
 python-dotenv
+pymssql
