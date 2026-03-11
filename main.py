@@ -15,6 +15,7 @@ DB_DATABASE = os.getenv("DB_DATABASE")
 DB_USERNAME = os.getenv("DB_USERNAME")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_DRIVER = os.getenv("DB_DRIVER")
+DB_AUTH_METHOD = os.getenv("DB_AUTH_METHOD", "SQL") # "SQL" or "Windows"
 
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
@@ -31,10 +32,22 @@ def get_db_connection():
     print("--- Attempting to connect to the database with the following parameters: ---")
     print(f"Server: {DB_SERVER}")
     print(f"Database: {DB_DATABASE}")
-    print(f"Username: {DB_USERNAME}")
     print(f"Driver: {DB_DRIVER}")
+    print(f"Authentication Method: {DB_AUTH_METHOD}")
+
+    conn_str = f"DRIVER={DB_DRIVER};SERVER={DB_SERVER};DATABASE={DB_DATABASE};"
+
+    if DB_AUTH_METHOD.lower() == "windows":
+        conn_str += "Trusted_Connection=yes;"
+    else: # SQL Server Authentication
+        print(f"Username: {DB_USERNAME}")
+        conn_str += f"UID={DB_USERNAME};PWD={DB_PASSWORD};"
+
+    # Adding parameters to handle potential encryption/certificate issues
+    conn_str += "Encrypt=False;TrustServerCertificate=True;"
+
     print("-----------------------------------------------------------------------")
-    conn_str = f"DRIVER={DB_DRIVER};SERVER={DB_SERVER};DATABASE={DB_DATABASE};UID={DB_USERNAME};PWD={DB_PASSWORD}"
+
     try:
         conn = pyodbc.connect(conn_str)
         print("Database connection successful!")
