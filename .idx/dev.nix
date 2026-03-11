@@ -5,9 +5,9 @@
   channel = "stable-24.05"; # or "unstable"
   # Use https://search.nixos.org/packages to find packages
   packages = [
+    pkgs.python3
+    pkgs.pip
     # pkgs.go
-    # pkgs.python311
-    # pkgs.python311Packages.pip
     # pkgs.nodejs_20
     # pkgs.nodePackages.nodemon
   ];
@@ -16,6 +16,7 @@
   idx = {
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
+      "ms-python.python"
       # "vscodevim.vim"
       "google.gemini-cli-vscode-ide-companion"
     ];
@@ -39,6 +40,7 @@
     workspace = {
       # Runs when a workspace is first created
       onCreate = {
+        pip-install = "pip install -r requirements.txt";
         # Example: install JS dependencies from NPM
         # npm-install = "npm install";
         # Open editors for the following files by default, if they exist:
