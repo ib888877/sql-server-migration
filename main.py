@@ -1,15 +1,15 @@
 
 import os
 import pandas as pd
-import pymssql # Changed from pyodbc
+import pymssql
 import boto3
 from botocore.exceptions import NoCredentialsError
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 
 # --- Configuration ---
-# Replace these with your actual database and S3 credentials
 DB_SERVER = os.getenv("DB_SERVER")
 DB_DATABASE = os.getenv("DB_DATABASE")
 DB_USERNAME = os.getenv("DB_USERNAME")
@@ -20,11 +20,12 @@ S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
 S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
 S3_REGION = os.getenv("S3_REGION")
 
-TABLES_TO_EXPORT = ["bkup_raw_transactions_20230331"] # Replace with your table names
+TABLES_TO_EXPORT = ["bkup_raw_transactions_20230331"]
 
-CHUNK_SIZE = 1000000  # One million records per CSV
+CHUNK_SIZE = 1000000
+PROGRESS_FILE = "progress.json"
 
-# --- Database Connection (Now using pymssql) ---
+# --- Database Connection ---
 def get_db_connection():
     """Establishes a connection to the SQL Server database using pymssql."""
     print("--- Attempting to connect to the database with pymssql: ---")
@@ -59,7 +60,6 @@ def get_s3_client():
             aws_secret_access_key=S3_SECRET_KEY,
             region_name=S3_REGION
         )
-        # Check if we can access the specific bucket
         s3_client.head_bucket(Bucket=S3_BUCKET_NAME)
         print("S3 connection successful!")
         return s3_client
@@ -70,13 +70,29 @@ def get_s3_client():
         print(f"S3 connection error: {e}")
         return None
 
+# --- Progress Handling ---
+def load_progress():
+    """Loads the export progress from the progress file."""
+    if os.path.exists(PROGRESS_FILE):
+        with open(PROGRESS_FILE, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_progress(progress):
+    """Saves the export progress to the progress file."""
+    with open(PROGRESS_FILE, 'w') as f:
+        json.dump(progress, f, indent=4)
+
 # --- Main Export Logic ---
-def export_table_to_csv(table_name, conn, s3_client):
-    """Exports a single table to CSV files in chunks."""
+def export_table_to_csv(table_name, conn, s3_client, progress):
+    """Exports a single table to CSV files in chunks, resuming from saved progress."""
     print(f"Exporting table: {table_name}")
+
+    table_progress = progress.get(table_name, {"offset": 0, "file_count": 1})
+    offset = table_progress["offset"]
+    file_count = table_progress["file_count"]
+
     try:
-        offset = 0
-        file_count = 1
         while True:
             query = f"SELECT * FROM {table_name} ORDER BY (SELECT NULL) OFFSET {offset} ROWS FETCH NEXT {CHUNK_SIZE} ROWS ONLY"
             df = pd.read_sql(query, conn)
@@ -90,13 +106,23 @@ def export_table_to_csv(table_name, conn, s3_client):
             try:
                 s3_client.put_object(Bucket=S3_BUCKET_NAME, Key=f"DB_Export/{table_name}/{file_name}", Body=csv_buffer)
                 print(f"Uploaded {file_name} to S3 bucket {S3_BUCKET_NAME}")
+
+                offset += CHUNK_SIZE
+                file_count += 1
+                progress[table_name] = {"offset": offset, "file_count": file_count}
+                save_progress(progress)
+
             except Exception as e:
                 print(f"Error uploading to S3: {e}")
+                print("The process will stop. You can resume it later.")
                 return
 
-            offset += CHUNK_SIZE
-            file_count += 1
         print(f"Finished exporting table: {table_name}")
+        # Reset progress for the table once it's fully exported
+        if table_name in progress:
+            del progress[table_name]
+            save_progress(progress)
+
     except Exception as e:
         print(f"Error exporting table {table_name}: {e}")
 
@@ -114,8 +140,10 @@ def main():
         print("No tables to export. Please update the TABLES_TO_EXPORT list in main.py")
         return
 
+    progress = load_progress()
+
     for table in TABLES_TO_EXPORT:
-        export_table_to_csv(table, db_conn, s3_client)
+        export_table_to_csv(table, db_conn, s3_client, progress)
 
     db_conn.close()
     print("Export process completed.")
