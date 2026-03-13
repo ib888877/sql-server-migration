@@ -100,7 +100,6 @@ TABLES_TO_EXPORT = ['bkup_rpt_tr04_rcpt_20220614',
 'raw_mpesa_report',
 'raw_st_proc',
 'raw_tr_prod',
-'raw_transactions',
 'raw_transactions_Hani_draft',
 'rpt_tr04_rcpt',
 'rpt2_bk01_shop_month',
@@ -117,7 +116,6 @@ TABLES_TO_EXPORT = ['bkup_rpt_tr04_rcpt_20220614',
 'rpt2_tr02_shop_day_prog',
 'rpt2_tr02bk01_shop_month',
 'rpt2_tr03_anomaly_qty_nfi',
-'rpt2_tr05_shop_prod_day_prog',
 'rpt2_tr06_prod_month_median_price',
 'sales_draft',
 'sysdiagrams',
@@ -126,6 +124,8 @@ TABLES_TO_EXPORT = ['bkup_rpt_tr04_rcpt_20220614',
 'user_access_control',
 'user_access_level'
 ]
+# 'raw_transactions',
+# 'rpt2_tr05_shop_prod_day_prog',
 
 CHUNK_SIZE = 1000000
 PROGRESS_FILE = "progress.json"
