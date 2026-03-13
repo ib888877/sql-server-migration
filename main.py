@@ -90,7 +90,7 @@ TABLES_TO_EXPORT = [
 # 'log_tr_errors',
 # 'log_tr_errors_prod',
 # 'newitems',
-'quantum_raw_transactions_copy',
+#'quantum_raw_transactions_copy',
 'raw_bank',
 'raw_enrolment_list',
 'raw_exchange_rate_usd',
