@@ -20,7 +20,7 @@ S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
 S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
 S3_REGION = os.getenv("S3_REGION")
 
-TABLES_TO_EXPORT = ['bkup_rpt_tr04_rcpt_20220614',
+TABLES_TO_EXPORT = [
 'bkup_v_vam_comm_shop_day_20221117',
 'cbt_process_mapping',
 'changelog_ct_product',
@@ -126,7 +126,7 @@ TABLES_TO_EXPORT = ['bkup_rpt_tr04_rcpt_20220614',
 ]
 # 'raw_transactions',
 # 'rpt2_tr05_shop_prod_day_prog',
-
+# 'bkup_rpt_tr04_rcpt_20220614',
 CHUNK_SIZE = 1000000
 PROGRESS_FILE = "progress.json"
 
